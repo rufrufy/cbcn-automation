@@ -1,0 +1,24 @@
+# 5SIM JWT API key
+.5sim_key
+
+# Generated API keys
+API_KEYS.txt
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# HAR captures (debug artifacts)
+*.har.json
+
+# Screenshots
+*.png
+
+# Session cookies
+session_cookies.json
+
+# Config with credentials
+.env
