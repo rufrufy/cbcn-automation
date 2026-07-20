@@ -169,6 +169,12 @@ def api_start():
             env_lines.append(f"# {key}=")
     ENV_FILE.write_text("\n".join(env_lines) + "\n", encoding="utf-8")
 
+    # Force UTF-8 in child process so bot.py print() of unicode chars (✓✗⚠)
+    # doesn't crash on Windows cp1252
+    proc_env["PYTHONIOENCODING"] = "utf-8"
+    proc_env["PYTHONUTF8"] = "1"
+    proc_env["PYTHONUNBUFFERED"] = "1"
+
     # Spawn bot.py
     run_id = str(uuid.uuid4())
     cmd = [python_cmd, str(BOT_SCRIPT), target_keys]
