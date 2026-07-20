@@ -1,0 +1,321 @@
+#!/usr/bin/env python3
+"""
+cbcn-automation Control Panel Server
+=====================================
+Flask server wrapping bot.py with SSE log streaming.
+
+bot.py is NOT modified. This server only:
+  - Writes .5sim_key + .env from HTML form input
+  - Spawns bot.py as subprocess with env vars loaded
+  - Streams stdout/stderr to browser via SSE
+  - Provides stop/status endpoints
+
+Run:
+    pip install flask requests beautifulsoup4
+    python server.py
+    # open http://localhost:5000
+"""
+
+import os
+import sys
+import json
+import uuid
+import signal
+import subprocess
+import threading
+import queue
+import time
+from pathlib import Path
+
+from flask import Flask, Response, request, jsonify, send_from_directory
+
+BASE_DIR = Path(__file__).resolve().parent
+BOT_SCRIPT = BASE_DIR / "bot.py"
+KEY_FILE = BASE_DIR / ".5sim_key"
+ENV_FILE = BASE_DIR / ".env"
+
+app = Flask(__name__, static_folder=None)
+
+# Run registry: run_id -> { process, log_queue, status, started_at }
+_runs = {}
+_runs_lock = threading.Lock()
+
+
+def _read_env_file(path):
+    """Parse .env file into dict, skipping comments and blanks."""
+    env = {}
+    if not path.exists():
+        return env
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        env[k.strip()] = v.strip()
+    return env
+
+
+def _stream_process(proc, run_id, run_env):
+    """Background thread: read proc stdout line by line, push to run's queue."""
+    rc = -1
+    try:
+        with proc:
+            for line in iter(proc.stdout.readline, ""):
+                if line:
+                    payload = {"type": "log", "data": line.rstrip("\n\r"),
+                               "ts": time.time()}
+                    _runs[run_id]["queue"].put(payload)
+                if _runs[run_id]["stop_requested"]:
+                    break
+            proc.wait()
+            rc = proc.returncode
+    except Exception as e:
+        _runs[run_id]["queue"].put(
+            {"type": "error", "data": f"stream error: {e}", "ts": time.time()})
+        rc = -1
+    finally:
+        status = "stopped" if _runs[run_id]["stop_requested"] else (
+            "completed" if rc == 0 else "failed")
+        _runs[run_id]["status"] = status
+        _runs[run_id]["return_code"] = rc
+        _runs[run_id]["ended_at"] = time.time()
+        _runs[run_id]["queue"].put(
+            {"type": "end", "status": status, "return_code": rc,
+             "ts": time.time()})
+
+
+@app.route("/")
+def index():
+    return send_from_directory(BASE_DIR, "index.html")
+
+
+@app.route("/api/status")
+def api_status():
+    """Global status: active runs, key counts."""
+    with _runs_lock:
+        active = [rid for rid, r in _runs.items()
+                  if r["status"] == "running"]
+    keys_file = BASE_DIR / "API_KEYS.txt"
+    key_count = 0
+    if keys_file.exists():
+        key_count = sum(1 for line in keys_file.read_text(
+            encoding="utf-8", errors="replace").splitlines() if line.strip())
+    return jsonify({
+        "active_runs": len(active),
+        "active_run_ids": active,
+        "api_keys_file_count": key_count,
+        "bot_script_exists": BOT_SCRIPT.exists(),
+    })
+
+
+@app.route("/api/start", methods=["POST"])
+def api_start():
+    """Start bot.py with config from HTML form.
+
+    Expects JSON:
+      {
+        "fivesim_key": "...",
+        "target_keys": 10,
+        "python_cmd": "python3",
+        "proxies": {"PROXY_HK_1": "...", ...}
+      }
+    """
+    data = request.get_json(force=True, silent=True) or {}
+
+    fivesim_key = (data.get("fivesim_key") or "").strip()
+    if not fivesim_key:
+        return jsonify({"error": "5SIM key wajib diisi"}), 400
+    if not BOT_SCRIPT.exists():
+        return jsonify({"error": f"bot.py tidak ditemukan di {BOT_SCRIPT}"}), 400
+
+    target_keys = str(data.get("target_keys") or "10")
+    try:
+        int(target_keys)
+    except ValueError:
+        return jsonify({"error": "target_keys harus angka"}), 400
+
+    python_cmd = data.get("python_cmd") or sys.executable or "python3"
+
+    # Reject if any run still active
+    with _runs_lock:
+        for rid, r in _runs.items():
+            if r["status"] == "running":
+                return jsonify({
+                    "error": f"Bot sedang jalan (run_id={rid[:8]}). Stop dulu.",
+                    "active_run_id": rid,
+                }), 409
+
+    # Write .5sim_key
+    KEY_FILE.write_text(fivesim_key + "\n", encoding="utf-8")
+    try:
+        os.chmod(KEY_FILE, 0o600)
+    except OSError:
+        pass  # Windows ignores chmod
+
+    # Build env for subprocess: current env + proxy vars from form
+    proc_env = os.environ.copy()
+    proxies = data.get("proxies") or {}
+    env_lines = ["# cbcn-automation environment (auto-generated by server.py)",
+                 f"# Generated {time.strftime('%Y-%m-%d %H:%M:%S')}", ""]
+    for key in ["PROXY_HK_1", "PROXY_HK_2", "PROXY_MO_1", "PROXY_MO_2",
+                "PROXY_CN_1", "PROXY_CN_2"]:
+        val = (proxies.get(key) or "").strip()
+        if val:
+            proc_env[key] = val
+            env_lines.append(f"{key}={val}")
+        else:
+            env_lines.append(f"# {key}=")
+    ENV_FILE.write_text("\n".join(env_lines) + "\n", encoding="utf-8")
+
+    # Spawn bot.py
+    run_id = str(uuid.uuid4())
+    cmd = [python_cmd, str(BOT_SCRIPT), target_keys]
+
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=str(BASE_DIR),
+            env=proc_env,
+            text=True,
+            bufsize=1,
+            encoding="utf-8",
+            errors="replace",
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
+        )
+    except FileNotFoundError:
+        return jsonify({
+            "error": f"Python command tidak ditemukan: {python_cmd}. "
+                     f"Coba 'python' atau path lengkap."
+        }), 400
+    except Exception as e:
+        return jsonify({"error": f"Gagal start bot.py: {e}"}), 500
+
+    with _runs_lock:
+        _runs[run_id] = {
+            "process": proc,
+            "queue": queue.Queue(),
+            "status": "running",
+            "stop_requested": False,
+            "started_at": time.time(),
+            "ended_at": None,
+            "return_code": None,
+            "command": " ".join(cmd),
+            "target_keys": target_keys,
+        }
+
+    t = threading.Thread(target=_stream_process,
+                         args=(proc, run_id, proc_env), daemon=True)
+    t.start()
+
+    return jsonify({
+        "run_id": run_id,
+        "command": " ".join(cmd),
+        "started_at": _runs[run_id]["started_at"],
+    })
+
+
+@app.route("/api/stream/<run_id>")
+def api_stream(run_id):
+    """SSE endpoint: stream log lines for a run until completion."""
+    with _runs_lock:
+        run = _runs.get(run_id)
+    if not run:
+        return jsonify({"error": "run_id tidak ditemukan"}), 404
+
+    def event_stream():
+        q = run["queue"]
+        # Send initial event with run metadata
+        yield f"event: meta\ndata: {json.dumps({'run_id': run_id, 'status': run['status'], 'command': run['command']})}\n\n"
+
+        while True:
+            try:
+                payload = q.get(timeout=15)
+            except queue.Empty:
+                # Heartbeat keep-alive
+                yield f": heartbeat {int(time.time())}\n\n"
+                with _runs_lock:
+                    cur_status = _runs[run_id]["status"] if run_id in _runs else "gone"
+                if cur_status != "running":
+                    break
+                continue
+
+            yield f"data: {json.dumps(payload)}\n\n"
+
+            if payload.get("type") == "end":
+                break
+
+    return Response(
+        event_stream(),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@app.route("/api/stop/<run_id>", methods=["POST"])
+def api_stop(run_id):
+    """Stop a running bot.py process."""
+    with _runs_lock:
+        run = _runs.get(run_id)
+    if not run:
+        return jsonify({"error": "run_id tidak ditemukan"}), 404
+    if run["status"] != "running":
+        return jsonify({"status": run["status"], "message": "sudah selesai"})
+
+    run["stop_requested"] = True
+    proc = run["process"]
+    try:
+        if os.name == "nt":
+            # Windows: send CTRL_BREAK to process group
+            proc.send_signal(signal.CTRL_BREAK_EVENT)
+        else:
+            proc.send_signal(signal.SIGTERM)
+        # Grace period
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+    except Exception as e:
+        return jsonify({"error": f"gagal stop: {e}"}), 500
+
+    return jsonify({"status": "stopping", "run_id": run_id})
+
+
+@app.route("/api/keys")
+def api_keys():
+    """Return contents of API_KEYS.txt."""
+    keys_file = BASE_DIR / "API_KEYS.txt"
+    if not keys_file.exists():
+        return jsonify({"keys": [], "count": 0})
+    keys = [l.strip() for l in keys_file.read_text(
+        encoding="utf-8", errors="replace").splitlines() if l.strip()]
+    return jsonify({"keys": keys, "count": len(keys)})
+
+
+@app.route("/api/clear_keys", methods=["POST"])
+def api_clear_keys():
+    """Clear API_KEYS.txt."""
+    keys_file = BASE_DIR / "API_KEYS.txt"
+    if keys_file.exists():
+        keys_file.write_text("", encoding="utf-8")
+    return jsonify({"cleared": True})
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("CBCN_PORT", "5000"))
+    host = os.environ.get("CBCN_HOST", "127.0.0.1")
+    print("=" * 48)
+    print("  cbcn-automation Control Panel Server")
+    print(f"  http://{host}:{port}")
+    print("=" * 48)
+    print(f"  bot.py: {BOT_SCRIPT}")
+    print("  Ctrl+C to stop")
+    print()
+    app.run(host=host, port=port, debug=False, threaded=True)

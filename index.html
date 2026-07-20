@@ -27,49 +27,72 @@
     min-height: 100vh;
   }
   header {
-    padding: 24px 32px;
+    padding: 20px 32px;
     border-bottom: 1px solid var(--border);
     background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
   }
-  header h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
-  header .sub { color: var(--muted); font-size: 13px; }
-  header .links { margin-top: 10px; }
+  header h1 { margin: 0 0 4px; font-size: 20px; font-weight: 600; }
+  header .sub { color: var(--muted); font-size: 12px; }
   header .links a {
     color: var(--accent);
     text-decoration: none;
     font-size: 12px;
-    margin-right: 16px;
+    margin-left: 16px;
   }
   header .links a:hover { color: var(--accent-hover); text-decoration: underline; }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+  }
+  .status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .status-pill.idle .dot { background: var(--muted); }
+  .status-pill.running .dot { background: var(--success); animation: pulse 1.2s infinite; }
+  .status-pill.stopped .dot { background: var(--warn); }
+  .status-pill.completed .dot { background: var(--success); }
+  .status-pill.failed .dot { background: var(--danger); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
   main {
-    max-width: 1100px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 32px;
+    padding: 24px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    gap: 20px;
   }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; padding: 12px; } }
   .card {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 20px;
+    padding: 18px;
   }
+  .card.full { grid-column: 1 / -1; }
   .card h2 {
-    margin: 0 0 16px;
-    font-size: 15px;
+    margin: 0 0 14px;
+    font-size: 14px;
     font-weight: 600;
-    color: var(--fg);
     display: flex;
     align-items: center;
     gap: 8px;
+    justify-content: space-between;
   }
+  .card h2 .left { display: flex; align-items: center; gap: 8px; }
   .card h2 .num {
     background: var(--accent);
     color: #000;
-    width: 22px;
-    height: 22px;
+    width: 22px; height: 22px;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
@@ -77,7 +100,7 @@
     font-size: 12px;
     font-weight: 700;
   }
-  .field { margin-bottom: 12px; }
+  .field { margin-bottom: 11px; }
   .field label {
     display: block;
     margin-bottom: 4px;
@@ -88,30 +111,25 @@
   .field label .req { color: var(--danger); }
   .field input, .field textarea, .field select {
     width: 100%;
-    padding: 8px 12px;
+    padding: 7px 11px;
     background: var(--code-bg);
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--fg);
-    font: 13px/1.4 "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font: 13px/1.4 "SFMono-Regular", Consolas, Menlo, monospace;
     outline: none;
     transition: border-color 0.15s;
   }
-  .field input:focus, .field textarea:focus {
+  .field input:focus, .field textarea:focus, .field select:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
   }
   .field input[type="number"] { max-width: 120px; }
-  .field .hint { color: var(--muted); font-size: 11px; margin-top: 4px; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 16px;
-  }
+  .field .hint { color: var(--muted); font-size: 11px; margin-top: 3px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
   button {
-    padding: 9px 16px;
+    padding: 8px 14px;
     border: 1px solid var(--border);
     border-radius: 6px;
     background: var(--panel);
@@ -121,26 +139,23 @@
     cursor: pointer;
     transition: all 0.15s;
   }
-  button:hover { border-color: var(--accent); color: var(--accent); }
-  button.primary {
-    background: var(--accent);
-    color: #000;
-    border-color: var(--accent);
-    font-weight: 600;
-  }
-  button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #000; }
-  button.success { background: var(--success); color: #000; border-color: var(--success); font-weight: 600; }
-  button.success:hover { filter: brightness(1.1); color: #000; }
+  button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); color: #000; }
+  button.danger { background: var(--danger); color: #fff; border-color: var(--danger); font-weight: 600; }
+  button.danger:hover:not(:disabled) { filter: brightness(1.1); }
+
   pre.output {
     background: var(--code-bg);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 14px;
+    padding: 12px;
     overflow-x: auto;
     font: 12px/1.5 "SFMono-Regular", Consolas, monospace;
     color: #c9d1d9;
-    margin: 0 0 12px;
-    max-height: 260px;
+    margin: 0 0 10px;
+    max-height: 160px;
     overflow-y: auto;
     white-space: pre-wrap;
     word-break: break-all;
@@ -150,41 +165,51 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin: 14px 0 6px;
+    margin: 12px 0 5px;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
-  .output-label .filename {
-    color: var(--accent);
-    text-transform: none;
-    font-family: monospace;
-    letter-spacing: 0;
-  }
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
-  }
+  .output-label .filename { color: var(--accent); text-transform: none; font-family: monospace; letter-spacing: 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
   .badge-mono { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
-  .badge-ok { background: rgba(63, 185, 80, 0.15); color: var(--success); }
-  .badge-warn { background: rgba(210, 153, 34, 0.15); color: var(--warn); }
   .alert {
-    padding: 12px 14px;
+    padding: 11px 13px;
     border-radius: 6px;
     font-size: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     border: 1px solid;
   }
   .alert-info { background: rgba(88, 166, 255, 0.08); border-color: rgba(88, 166, 255, 0.3); color: var(--accent); }
   .alert-warn { background: rgba(210, 153, 34, 0.08); border-color: rgba(210, 153, 34, 0.3); color: var(--warn); }
   .alert code { background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 3px; font-family: monospace; }
+
+  .log-container {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    height: 420px;
+    overflow-y: auto;
+    padding: 12px;
+    font: 12px/1.5 "SFMono-Regular", Consolas, monospace;
+    color: #c9d1d9;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+  .log-container .log-line { padding: 1px 0; }
+  .log-container .log-line.error { color: var(--danger); }
+  .log-container .log-line.success { color: var(--success); }
+  .log-container .log-line.warn { color: var(--warn); }
+  .log-container .log-line.system { color: var(--accent); font-weight: 600; }
+  .log-container .log-line .ts { color: var(--muted); font-size: 10px; margin-right: 6px; }
+  .log-empty { color: var(--muted); font-style: italic; }
+  .log-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .log-stats { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-left: auto; }
+  .log-stats .stat strong { color: var(--fg); }
+
   .toast {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
+    bottom: 24px; right: 24px;
     background: var(--success);
     color: #000;
     padding: 10px 18px;
@@ -199,179 +224,167 @@
     z-index: 1000;
   }
   .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.error { background: var(--danger); color: #fff; }
+
   .footer {
-    max-width: 1100px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 24px 32px 48px;
+    padding: 20px 24px 40px;
     color: var(--muted);
     font-size: 12px;
     border-top: 1px solid var(--border);
   }
   .footer a { color: var(--accent); text-decoration: none; }
-  details { margin-top: 12px; }
-  summary {
-    cursor: pointer;
-    color: var(--muted);
-    font-size: 12px;
-    padding: 6px 0;
-  }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; color: var(--muted); font-size: 12px; padding: 5px 0; }
   summary:hover { color: var(--accent); }
-  .check-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 8px 0;
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .check-row input[type="checkbox"] { accent-color: var(--accent); }
-  .key-display {
-    font-family: monospace;
-    font-size: 11px;
-    color: var(--muted);
+  .key-list {
+    max-height: 120px;
+    overflow-y: auto;
     background: var(--code-bg);
-    padding: 2px 6px;
-    border-radius: 3px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    font: 11px/1.4 monospace;
+    color: var(--muted);
+    margin-top: 8px;
   }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>cbcn-automation Control Panel</h1>
-  <div class="sub">Generator konfigurasi untuk <code>bot.py</code> — CodeBuddy.cn batch registration + 9router auto-inject</div>
-  <div class="links">
-    <a href="https://github.com/exd77/cbcn-automation" target="_blank" rel="noopener">↑ Upstream</a>
-    <a href="https://github.com/rufrufy/cbcn-automation" target="_blank" rel="noopener">⎇ Fork</a>
-    <a href="https://5sim.net" target="_blank" rel="noopener">5SIM</a>
-    <a href="https://webshare.io" target="_blank" rel="noopener">Webshare</a>
+  <div>
+    <h1>cbcn-automation Control Panel</h1>
+    <div class="sub">Generator + Runner untuk <code>bot.py</code> — CodeBuddy.cn batch registration + 9router auto-inject</div>
+  </div>
+  <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap">
+    <span id="runStatus" class="status-pill idle"><span class="dot"></span> Idle</span>
+    <div class="links">
+      <a href="https://github.com/rufrufy/cbcn-automation" target="_blank" rel="noopener">⎇ Fork</a>
+      <a href="https://github.com/exd77/cbcn-automation" target="_blank" rel="noopener">↑ Upstream</a>
+    </div>
   </div>
 </header>
 
 <main>
 
-  <!-- LEFT: Config Form -->
   <section class="card">
-    <h2><span class="num">1</span>Konfigurasi</h2>
+    <h2><span class="left"><span class="num">1</span>Konfigurasi</span></h2>
 
     <div class="alert alert-info">
-      Isi field di bawah. Klik <strong>Generate</strong> untuk membuat file <code>.env</code>, <code>.5sim_key</code>, dan command run siap pakai. <code>bot.py</code> tidak diubah.
+      Isi config → klik <strong>Run</strong>. Server tulis <code>.5sim_key</code> + <code>.env</code>, lalu jalankan <code>bot.py</code>. Log stream real-time di bawah.
     </div>
 
     <div class="field">
       <label>5SIM JWT API Key <span class="req">*</span></label>
-      <textarea id="fivesim_key" rows="3" placeholder="eyJhbGciOiJIUzI1NiIs..."></textarea>
-      <div class="hint">Dapatkan di <a href="https://5sim.net" target="_blank" rel="noopener" style="color:var(--accent)">5sim.net</a> → Profile → API Key</div>
+      <textarea id="fivesim_key" rows="2" placeholder="eyJhbGciOiJIUzI1NiIs..."></textarea>
+      <div class="hint">Dari <a href="https://5sim.net" target="_blank" rel="noopener" style="color:var(--accent)">5sim.net</a> → Profile → API Key</div>
     </div>
 
     <div class="field">
       <label>Target API Keys</label>
       <input type="number" id="target_keys" value="10" min="1" max="1000">
-      <div class="hint">Jumlah key yang mau di-generate (default: 10). Biarkan 10 kalau ragu.</div>
+      <div class="hint">Jumlah key yang mau di-generate (default: 10).</div>
     </div>
 
     <div class="field">
       <label>Python Command</label>
       <select id="python_cmd">
-        <option value="python3">python3</option>
         <option value="python">python (Windows)</option>
-        <option value="py">py (Windows py launcher)</option>
+        <option value="python3">python3</option>
+        <option value="py">py (Windows launcher)</option>
       </select>
-      <div class="hint">Command Python yang ada di sistem kamu.</div>
+      <div class="hint">Command Python di sistem kamu.</div>
     </div>
 
     <details>
       <summary>▸ Proxy Webshare (opsional tapi direkomendasikan)</summary>
-
-      <div class="alert alert-warn" style="margin-top:10px">
-        Tanpa proxy, bot kemungkinan akan diblokir (IP bind per session). Isi minimal 1 proxy HK.
+      <div class="alert alert-warn" style="margin-top:8px">
+        Tanpa proxy, bot kemungkinan diblokir. Isi minimal 1 proxy HK.
       </div>
-
       <div class="grid-2">
-        <div class="field">
-          <label>PROXY_HK_1 <span class="badge badge-mono">HK</span></label>
-          <input type="text" id="proxy_hk_1" placeholder="http://user-HK-rotate:pass@p.webshare.io:80">
-        </div>
-        <div class="field">
-          <label>PROXY_HK_2 <span class="badge badge-mono">HK</span></label>
-          <input type="text" id="proxy_hk_2" placeholder="http://user-HK-rotate:pass@p.webshare.io:80">
-        </div>
-        <div class="field">
-          <label>PROXY_MO_1 <span class="badge badge-mono">MO</span></label>
-          <input type="text" id="proxy_mo_1" placeholder="http://user-MO-rotate:pass@p.webshare.io:80">
-        </div>
-        <div class="field">
-          <label>PROXY_MO_2 <span class="badge badge-mono">MO</span></label>
-          <input type="text" id="proxy_mo_2" placeholder="http://user-MO-rotate:pass@p.webshare.io:80">
-        </div>
-        <div class="field">
-          <label>PROXY_CN_1 <span class="badge badge-mono">CN</span></label>
-          <input type="text" id="proxy_cn_1" placeholder="http://user-CN-rotate:pass@p.webshare.io:80">
-        </div>
-        <div class="field">
-          <label>PROXY_CN_2 <span class="badge badge-mono">CN</span></label>
-          <input type="text" id="proxy_cn_2" placeholder="http://user-CN-rotate:pass@p.webshare.io:80">
-        </div>
-      </div>
-
-      <div class="check-row">
-        <input type="checkbox" id="load_dotenv" checked>
-        <label for="load_dotenv" style="margin:0; color:var(--fg)">Tambah <span class="key-display">from dotenv import load_dotenv</span> hint di komentar (bot.py baca env langsung, jadi pakai <code>set -a; source .env; set +a</code> atau export manual)</label>
+        <div class="field"><label>PROXY_HK_1 <span class="badge badge-mono">HK</span></label>
+          <input type="text" id="proxy_hk_1" placeholder="http://user-HK-rotate:pass@p.webshare.io:80"></div>
+        <div class="field"><label>PROXY_HK_2 <span class="badge badge-mono">HK</span></label>
+          <input type="text" id="proxy_hk_2" placeholder="http://user-HK-rotate:pass@p.webshare.io:80"></div>
+        <div class="field"><label>PROXY_MO_1 <span class="badge badge-mono">MO</span></label>
+          <input type="text" id="proxy_mo_1" placeholder="http://user-MO-rotate:pass@p.webshare.io:80"></div>
+        <div class="field"><label>PROXY_MO_2 <span class="badge badge-mono">MO</span></label>
+          <input type="text" id="proxy_mo_2" placeholder="http://user-MO-rotate:pass@p.webshare.io:80"></div>
+        <div class="field"><label>PROXY_CN_1 <span class="badge badge-mono">CN</span></label>
+          <input type="text" id="proxy_cn_1" placeholder="http://user-CN-rotate:pass@p.webshare.io:80"></div>
+        <div class="field"><label>PROXY_CN_2 <span class="badge badge-mono">CN</span></label>
+          <input type="text" id="proxy_cn_2" placeholder="http://user-CN-rotate:pass@p.webshare.io:80"></div>
       </div>
     </details>
 
     <div class="actions">
-      <button class="primary" onclick="generate()">⚡ Generate</button>
-      <button onclick="loadExample()">📋 Load Example</button>
-      <button onclick="clearAll()">🗑️ Clear</button>
+      <button class="primary" id="btnRun" onclick="startBot()">▶ Run bot.py</button>
+      <button class="danger" id="btnStop" onclick="stopBot()" disabled>■ Stop</button>
+      <button onclick="loadExample()">📋 Example</button>
+      <button onclick="clearAll()">🗑 Clear</button>
     </div>
   </section>
 
-  <!-- RIGHT: Output -->
   <section class="card">
-    <h2><span class="num">2</span>Output</h2>
+    <h2><span class="left"><span class="num">2</span>Generated Files</span>
+      <button onclick="generateFiles()" style="font-size:11px; padding:5px 10px">⚡ Generate Only</button>
+    </h2>
 
     <div class="output-label">
       <span>File: <span class="filename">.5sim_key</span></span>
-      <button onclick="download('.5sim_key', document.getElementById('out_5sim').textContent)">⬇ Download</button>
+      <button onclick="download('.5sim_key', $('out_5sim').textContent)" style="font-size:11px; padding:4px 10px">⬇</button>
     </div>
-    <pre class="output" id="out_5sim">(klik Generate)</pre>
+    <pre class="output" id="out_5sim">(klik Generate atau Run)</pre>
 
     <div class="output-label">
       <span>File: <span class="filename">.env</span></span>
-      <div style="display:flex; gap:6px">
-        <button onclick="copyToClipboard(document.getElementById('out_env').textContent)">📋 Copy</button>
-        <button onclick="download('.env', document.getElementById('out_env').textContent)">⬇ Download</button>
+      <div style="display:flex; gap:5px">
+        <button onclick="copyToClipboard($('out_env').textContent)" style="font-size:11px; padding:4px 10px">📋</button>
+        <button onclick="download('.env', $('out_env').textContent)" style="font-size:11px; padding:4px 10px">⬇</button>
       </div>
     </div>
-    <pre class="output" id="out_env">(klik Generate)</pre>
+    <pre class="output" id="out_env">(klik Generate atau Run)</pre>
 
     <div class="output-label">
-      <span>Run Command</span>
-      <div style="display:flex; gap:6px">
-        <button onclick="copyToClipboard(document.getElementById('out_cmd').textContent)">📋 Copy</button>
+      <span>Generated Keys (<strong id="keyCount">0</strong>) — API_KEYS.txt</span>
+      <div style="display:flex; gap:5px">
+        <button onclick="refreshKeys()" style="font-size:11px; padding:4px 10px">↻ Refresh</button>
+        <button onclick="clearKeys()" style="font-size:11px; padding:4px 10px">🗑 Clear</button>
       </div>
     </div>
-    <pre class="output" id="out_cmd">(klik Generate)</pre>
+    <div class="key-list" id="keyList"><span style="color:var(--muted); font-style:italic">Belum ada key.</span></div>
+  </section>
 
-    <div class="alert alert-info" id="next_steps" style="display:none">
-      <strong>Langkah berikutnya:</strong>
-      <ol style="margin:8px 0 0; padding-left:20px">
-        <li>Download <code>.5sim_key</code> dan <code>.env</code> ke folder repo (root).</li>
-        <li>Install deps: <code>pip install requests beautifulsoup4</code></li>
-        <li>Pastikan 9router jalan di port <code>20128</code> (DB: <code>~/.9router/db/data.sqlite</code>).</li>
-        <li>Copy Run Command di atas, paste di terminal di folder repo, tekan Enter.</li>
-        <li>Hasil key ada di <code>API_KEYS.txt</code> & otomatis inject ke 9router DB.</li>
-      </ol>
+  <section class="card full">
+    <h2>
+      <span class="left"><span class="num">3</span>Live Log</span>
+      <div class="log-stats">
+        <span class="stat">Lines: <strong id="logLineCount">0</strong></span>
+        <span class="stat">Keys: <strong id="logKeyFound">0</strong></span>
+        <span class="stat">Uptime: <strong id="logUptime">—</strong></span>
+      </div>
+    </h2>
+
+    <div class="log-toolbar">
+      <button onclick="clearLog()" style="font-size:11px; padding:5px 12px">🧹 Clear Log</button>
+      <button onclick="toggleAutoScroll()" id="btnAutoScroll" style="font-size:11px; padding:5px 12px">📜 Auto-scroll: ON</button>
+      <button onclick="downloadLog()" style="font-size:11px; padding:5px 12px">⬇ Download Log</button>
+      <span id="sseStatus" style="font-size:11px; color:var(--muted); margin-left:auto">Not connected</span>
+    </div>
+
+    <div class="log-container" id="logContainer">
+      <div class="log-empty">Log akan muncul di sini setelah bot.py dijalankan.</div>
     </div>
   </section>
 
 </main>
 
 <div class="footer">
-  <strong>cbcn-automation Control Panel</strong> — generator konfigurasi, tidak mengubah <code>bot.py</code>.
-  &nbsp;|&nbsp; Fork: <a href="https://github.com/rufrufy/cbcn-automation" target="_blank" rel="noopener">rufrufy/cbcn-automation</a>
-  &nbsp;|&nbsp; Upstream: <a href="https://github.com/exd77/cbcn-automation" target="_blank" rel="noopener">exd77/cbcn-automation</a>
+  <strong>cbcn-automation Control Panel</strong> — Flask server di <code>server.py</code>, <code>bot.py</code> tidak diubah.
+  &nbsp;|&nbsp; <a href="https://github.com/rufrufy/cbcn-automation" target="_blank" rel="noopener">rufrufy/cbcn-automation</a>
+  &nbsp;|&nbsp; Jalankan: <code>python server.py</code> → buka <code>http://localhost:5000</code>
 </div>
 
 <div class="toast" id="toast">✓ Copied</div>
@@ -379,9 +392,19 @@
 <script>
 function $(id) { return document.getElementById(id); }
 
-function showToast(msg) {
+let currentRunId = null;
+let eventSource = null;
+let autoScroll = true;
+let logLines = [];
+let keyFoundInLog = 0;
+let runStartedAt = null;
+let uptimeTimer = null;
+let statusCheckInterval = null;
+
+function showToast(msg, isError) {
   const t = $('toast');
   t.textContent = msg;
+  t.classList.toggle('error', !!isError);
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 1800);
 }
@@ -394,86 +417,277 @@ function download(filename, content) {
   const blob = new Blob([content], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast('✓ ' + filename + ' downloaded');
+  showToast('✓ ' + filename);
 }
 
-function generate() {
-  const key5 = $('fivesim_key').value.trim();
-  const target = $('target_keys').value || '10';
-  const pyCmd = $('python_cmd').value;
-  const proxies = {
-    PROXY_HK_1: $('proxy_hk_1').value.trim(),
-    PROXY_HK_2: $('proxy_hk_2').value.trim(),
-    PROXY_MO_1: $('proxy_mo_1').value.trim(),
-    PROXY_MO_2: $('proxy_mo_2').value.trim(),
-    PROXY_CN_1: $('proxy_cn_1').value.trim(),
-    PROXY_CN_2: $('proxy_cn_2').value.trim(),
-  };
+function setRunStatus(status, label) {
+  const pill = $('runStatus');
+  pill.className = 'status-pill ' + status;
+  pill.innerHTML = '<span class="dot"></span> ' + label;
+}
 
-  if (!key5) {
-    alert('5SIM JWT API Key wajib diisi!');
+function setButtonsRunning(running) {
+  $('btnRun').disabled = running;
+  $('btnStop').disabled = !running;
+}
+
+function getConfig() {
+  return {
+    fivesim_key: $('fivesim_key').value.trim(),
+    target_keys: $('target_keys').value || '10',
+    python_cmd: $('python_cmd').value,
+    proxies: {
+      PROXY_HK_1: $('proxy_hk_1').value.trim(),
+      PROXY_HK_2: $('proxy_hk_2').value.trim(),
+      PROXY_MO_1: $('proxy_mo_1').value.trim(),
+      PROXY_MO_2: $('proxy_mo_2').value.trim(),
+      PROXY_CN_1: $('proxy_cn_1').value.trim(),
+      PROXY_CN_2: $('proxy_cn_2').value.trim(),
+    }
+  };
+}
+
+function renderGeneratedFiles(config) {
+  $('out_5sim').textContent = config.fivesim_key || '(kosong)';
+  let envLines = ['# cbcn-automation environment', '# Generated by Control Panel', ''];
+  for (const [k, v] of Object.entries(config.proxies)) {
+    if (v) envLines.push(k + '=' + v);
+    else envLines.push('# ' + k + '=');
+  }
+  $('out_env').textContent = envLines.join('\n');
+}
+
+function generateFiles() {
+  const config = getConfig();
+  if (!config.fivesim_key) {
+    showToast('⚠ 5SIM key wajib', true);
+    $('fivesim_key').focus();
+    return;
+  }
+  renderGeneratedFiles(config);
+  showToast('✓ Files generated');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function addLogLine(text, type) {
+  if (logLines.length === 0) $('logContainer').innerHTML = '';
+  type = type || 'log';
+  const ts = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+  let cls = type;
+  if (type === 'log') {
+    if (/✓|SUCCESS|INJECT|complete|COMPLETE/i.test(text)) cls = 'success';
+    else if (/✗|FAIL|ERROR|error|Traceback|Exception/i.test(text)) cls = 'error';
+    else if (/⚠|WARN|warn|skip/i.test(text)) cls = 'warn';
+  }
+
+  const keyMatch = text.match(/ck_[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/);
+  if (keyMatch && type !== 'system') {
+    keyFoundInLog++;
+    $('logKeyFound').textContent = keyFoundInLog;
+  }
+
+  const div = document.createElement('div');
+  div.className = 'log-line ' + cls;
+  div.innerHTML = '<span class="ts">' + ts + '</span>' + escapeHtml(text);
+  $('logContainer').appendChild(div);
+  logLines.push(text);
+  $('logLineCount').textContent = logLines.length;
+
+  if (autoScroll) {
+    const c = $('logContainer');
+    c.scrollTop = c.scrollHeight;
+  }
+}
+
+function clearLog() {
+  logLines = [];
+  keyFoundInLog = 0;
+  $('logLineCount').textContent = '0';
+  $('logKeyFound').textContent = '0';
+  $('logContainer').innerHTML = '<div class="log-empty">Log cleared.</div>';
+}
+
+function toggleAutoScroll() {
+  autoScroll = !autoScroll;
+  $('btnAutoScroll').textContent = '📜 Auto-scroll: ' + (autoScroll ? 'ON' : 'OFF');
+}
+
+function downloadLog() {
+  if (logLines.length === 0) { showToast('⚠ Log kosong', true); return; }
+  download('cbcn-log-' + Date.now() + '.txt', logLines.join('\n'));
+}
+
+function startUptimeTimer() {
+  runStartedAt = Date.now();
+  if (uptimeTimer) clearInterval(uptimeTimer);
+  uptimeTimer = setInterval(() => {
+    if (!runStartedAt) return;
+    const secs = Math.floor((Date.now() - runStartedAt) / 1000);
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    $('logUptime').textContent = m + ':' + String(s).padStart(2, '0');
+  }, 1000);
+}
+
+function stopUptimeTimer() {
+  if (uptimeTimer) { clearInterval(uptimeTimer); uptimeTimer = null; }
+}
+
+async function startBot() {
+  const config = getConfig();
+  if (!config.fivesim_key) {
+    showToast('⚠ 5SIM key wajib', true);
     $('fivesim_key').focus();
     return;
   }
 
-  // .5sim_key content (raw key, no newline)
-  $('out_5sim').textContent = key5;
+  clearLog();
+  renderGeneratedFiles(config);
+  addLogLine('→ Starting bot.py (target: ' + config.target_keys + ' keys, python: ' + config.python_cmd + ')', 'system');
 
-  // .env content
-  let envLines = ['# cbcn-automation environment', '# Generated by Control Panel', ''];
-  let proxyCount = 0;
-  for (const [k, v] of Object.entries(proxies)) {
-    if (v) {
-      envLines.push(`${k}=${v}`);
-      proxyCount++;
-    } else {
-      envLines.push(`# ${k}=`);
+  setRunStatus('running', 'Starting...');
+  setButtonsRunning(true);
+  $('sseStatus').textContent = 'Connecting...';
+  startUptimeTimer();
+
+  try {
+    const resp = await fetch('/api/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      addLogLine('✗ ERROR: ' + (data.error || 'Failed to start'), 'error');
+      setRunStatus('failed', 'Failed');
+      setButtonsRunning(false);
+      stopUptimeTimer();
+      $('sseStatus').textContent = 'Error';
+      return;
     }
+    currentRunId = data.run_id;
+    addLogLine('✓ bot.py started (run_id: ' + data.run_id.slice(0, 8) + ')', 'system');
+    addLogLine('  Command: ' + data.command, 'system');
+    connectSSE(data.run_id);
+  } catch (e) {
+    addLogLine('✗ Network error: ' + e.message, 'error');
+    addLogLine('  Pastikan server jalan: python server.py', 'system');
+    setRunStatus('failed', 'Error');
+    setButtonsRunning(false);
+    stopUptimeTimer();
   }
-  $('out_env').textContent = envLines.join('\n');
+}
 
-  // Run command
-  const isWin = navigator.userAgent.includes('Windows');
-  let cmdLines = [];
-  cmdLines.push(`# ${proxyCount} proxy aktif, target ${target} key${proxyCount === 0 ? ' (⚠ tanpa proxy, rawan diblokir)' : ''}`);
-  cmdLines.push('');
-  cmdLines.push('# 1. Install dependencies (sekali saja):');
-  cmdLines.push(`pip install requests beautifulsoup4`);
-  cmdLines.push('');
-  cmdLines.push('# 2. Set env vars lalu run bot:');
+function connectSSE(runId) {
+  if (eventSource) { eventSource.close(); eventSource = null; }
+  $('sseStatus').textContent = 'Connecting...';
 
-  if (isWin) {
-    // Windows PowerShell
-    cmdLines.push('#    Windows PowerShell:');
-    cmdLines.push(`foreach ($line in Get-Content .env) { if ($line -and -not $line.StartsWith("#")) { $kv = $line -split "=",2; Set-Item -Path "Env:$($kv[0])" -Value $kv[1] } }`);
-    cmdLines.push(`${pyCmd} bot.py ${target}`);
-  } else {
-    // Linux/Mac
-    cmdLines.push('#    Linux / macOS:');
-    cmdLines.push(`set -a; source .env; set +a`);
-    cmdLines.push(`${pyCmd} bot.py ${target}`);
+  eventSource = new EventSource('/api/stream/' + runId);
+
+  eventSource.addEventListener('meta', () => {
+    $('sseStatus').textContent = 'Connected';
+    setRunStatus('running', 'Running');
+  });
+
+  eventSource.onmessage = (e) => {
+    try {
+      const payload = JSON.parse(e.data);
+      if (payload.type === 'log') {
+        addLogLine(payload.data);
+      } else if (payload.type === 'error') {
+        addLogLine(payload.data, 'error');
+      } else if (payload.type === 'end') {
+        const status = payload.status;
+        const rc = payload.return_code;
+        addLogLine('════════════════════════════════════════', 'system');
+        addLogLine('Bot finished. Status: ' + status + ' (exit code: ' + rc + ')', 'system');
+        setRunStatus(status, status.charAt(0).toUpperCase() + status.slice(1));
+        setButtonsRunning(false);
+        $('sseStatus').textContent = 'Ended (' + status + ')';
+        stopUptimeTimer();
+        eventSource.close();
+        eventSource = null;
+        refreshKeys();
+      }
+    } catch (err) {
+      addLogLine('[parse error] ' + e.data, 'error');
+    }
+  };
+
+  eventSource.onerror = () => {
+    $('sseStatus').textContent = 'Disconnected';
+  };
+}
+
+async function stopBot() {
+  if (!currentRunId) return;
+  addLogLine('→ Stopping bot.py...', 'system');
+  try {
+    const resp = await fetch('/api/stop/' + currentRunId, { method: 'POST' });
+    const data = await resp.json();
+    if (!resp.ok) {
+      addLogLine('✗ Stop failed: ' + (data.error || ''), 'error');
+      return;
+    }
+    addLogLine('✓ Stop signal sent', 'system');
+  } catch (e) {
+    addLogLine('✗ Stop error: ' + e.message, 'error');
   }
-  cmdLines.push('');
-  cmdLines.push('# 3. Cek hasil:');
-  cmdLines.push('cat API_KEYS.txt');
-  cmdLines.push('# Cek jumlah key di 9router DB:');
-  cmdLines.push('sqlite3 ~/.9router/db/data.sqlite \\');
-  cmdLines.push('  "SELECT COUNT(*) FROM providerConnections WHERE provider=\'codebuddy-cn\'"');
+}
 
-  $('out_cmd').textContent = cmdLines.join('\n');
+async function refreshKeys() {
+  try {
+    const resp = await fetch('/api/keys');
+    const data = await resp.json();
+    $('keyCount').textContent = data.count;
+    if (data.count === 0) {
+      $('keyList').innerHTML = '<span style="color:var(--muted); font-style:italic">Belum ada key.</span>';
+    } else {
+      $('keyList').innerHTML = data.keys.map(k => '<div>' + escapeHtml(k) + '</div>').join('');
+    }
+  } catch (e) { /* server offline */ }
+}
 
-  $('next_steps').style.display = 'block';
-  showToast('✓ Generated');
+async function clearKeys() {
+  if (!confirm('Hapus semua key di API_KEYS.txt?')) return;
+  try {
+    await fetch('/api/clear_keys', { method: 'POST' });
+    refreshKeys();
+    showToast('✓ Keys cleared');
+  } catch (e) {
+    showToast('✗ Server not running', true);
+  }
+}
+
+async function checkServerStatus() {
+  try {
+    const resp = await fetch('/api/status');
+    const data = await resp.json();
+    if (data.active_runs > 0 && !currentRunId) {
+      setRunStatus('running', 'Running');
+      currentRunId = data.active_run_ids[0];
+      connectSSE(currentRunId);
+      setButtonsRunning(true);
+    }
+    if (!data.bot_script_exists) {
+      addLogLine('⚠ bot.py tidak ditemukan di folder server!', 'error');
+    }
+  } catch (e) {
+    setRunStatus('idle', 'Server Offline');
+    $('sseStatus').textContent = 'Server offline — run `python server.py`';
+  }
 }
 
 function loadExample() {
-  $('fivesim_key').value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_key_replace_with_real';
+  $('fivesim_key').value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_replace_with_real';
   $('target_keys').value = '10';
   $('proxy_hk_1').value = 'http://user-HK-rotate:pass@p.webshare.io:80';
   $('proxy_hk_2').value = 'http://user-HK-rotate:pass@p.webshare.io:80';
@@ -481,6 +695,7 @@ function loadExample() {
   $('proxy_mo_2').value = 'http://user-MO-rotate:pass@p.webshare.io:80';
   $('proxy_cn_1').value = 'http://user-CN-rotate:pass@p.webshare.io:80';
   $('proxy_cn_2').value = 'http://user-CN-rotate:pass@p.webshare.io:80';
+  renderGeneratedFiles(getConfig());
   showToast('✓ Example loaded');
 }
 
@@ -489,17 +704,20 @@ function clearAll() {
   ['fivesim_key','proxy_hk_1','proxy_hk_2','proxy_mo_1','proxy_mo_2','proxy_cn_1','proxy_cn_2']
     .forEach(id => $(id).value = '');
   $('target_keys').value = '10';
-  $('out_5sim').textContent = '(klik Generate)';
-  $('out_env').textContent = '(klik Generate)';
-  $('out_cmd').textContent = '(klik Generate)';
-  $('next_steps').style.display = 'none';
+  $('out_5sim').textContent = '(klik Generate atau Run)';
+  $('out_env').textContent = '(klik Generate atau Run)';
   showToast('✓ Cleared');
 }
 
-// Auto-detect OS
-if (navigator.userAgent.includes('Windows')) {
-  $('python_cmd').value = 'python';
+if (!navigator.userAgent.includes('Windows')) {
+  $('python_cmd').value = 'python3';
 }
+
+checkServerStatus();
+refreshKeys();
+statusCheckInterval = setInterval(() => {
+  if (!currentRunId) checkServerStatus();
+}, 10000);
 </script>
 
 </body>
